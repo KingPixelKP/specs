@@ -1,3 +1,7 @@
+# Start-Up
+``` bash
+git clone https://github.com/KingPixelKP/C-Template.git <Directory-Name>
+```
 # Remeber
 If clangd is not recognising headers try changing this in vscode's settings
 ``` JavaScript
@@ -5,15 +9,16 @@ If clangd is not recognising headers try changing this in vscode's settings
     "--compile-commands-dir=build",
   ],
 ```
-# Config
+# Cmake
+## Config
 ``` bash
 cmake -S . -B build 
 ```
-# Building
+## Building
 ``` bash
 cmake --build build 
 ```
-# Testing
+## Testing
 ``` bash
 cd build
 ctest
