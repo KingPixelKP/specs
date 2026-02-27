@@ -1,6 +1,11 @@
 # Start-Up
+## Clone 
 ``` bash
 git clone https://github.com/KingPixelKP/C-Template.git <Directory-Name>
+```
+## Remove Remote
+``` bash
+git remote remove origin
 ```
 # Remeber
 If clangd is not recognising headers try changing this in vscode's settings
