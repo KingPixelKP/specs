@@ -4,6 +4,7 @@
 #include "entity.h"
 #include "types.h"
 #include <expected>
+#include <functional>
 #ifndef CORE_H
 #define CORE_H
 
@@ -21,6 +22,8 @@ public:
   std::expected<void, EcsError> add_component(entity_id e_id, T component);
   template <typename T>
   std::expected<void, EcsError> remove_component(entity_id e_id);
+  template <typename T>
+  std::expected<std::reference_wrapper<T>, EcsError> get_component(entity_id e_id);
 
   template <typename T>
   std::expected<bool, EcsError> has_component(entity_id e_id);
@@ -38,10 +41,18 @@ template <typename T> component_id Core::get_component_id() {
 template <typename T>
 std::expected<void, EcsError> Core::add_component(entity_id e_id, T component) {
   component_id c_id = get_component_id<T>();
+  auto bitset_result = entity_manager.entity_bitset(e_id);
+  if (!bitset_result)
+    return std::unexpected(bitset_result.error());
+
+  auto comp_result = archetype_manager.add_component_entity<T>(
+      e_id, c_id, component, bitset_result.value());
+  if (!comp_result)
+    return comp_result;
+
   auto add_result = entity_manager.component_added(e_id, c_id);
   if (!add_result)
     return add_result;
-  // Add to archetype
   return {};
 }
 
@@ -53,6 +64,15 @@ std::expected<void, EcsError> Core::remove_component(entity_id e_id) {
     return remove_result;
   // Remove from archetype
   return {};
+}
+
+template <typename T>
+std::expected<std::reference_wrapper<T>, EcsError> Core::get_component(entity_id e_id) {
+  component_id c_id = component_manager.get_component_id<T>();
+  auto entity_fetch = entity_manager.entity_bitset(e_id);
+  if (!entity_fetch)
+    return std::unexpected(entity_fetch.error());
+  return archetype_manager.get_component<T>(e_id, c_id, entity_fetch.value());
 }
 
 template <typename T>

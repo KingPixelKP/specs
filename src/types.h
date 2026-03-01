@@ -10,8 +10,10 @@ enum EcsError {
     NoEntity,
     NoComponent,
     DupComponent,
+    DupEntity,
     NotImplemented,
 };
+
 
 
 #endif

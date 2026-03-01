@@ -25,7 +25,9 @@ public:
                                                 component_id c_id);
   std::expected<void, EcsError> component_removed(entity_id e_id,
                                                   component_id c_id);
-  std::expected<bool, EcsError> has_component(entity_id e_id, component_id c_id);
+  std::expected<boost::dynamic_bitset<>, EcsError> entity_bitset(entity_id e_id);
+  std::expected<bool, EcsError> has_component(entity_id e_id,
+                                              component_id c_id);
 
 private:
   void expand_entities(int start, int finish);

@@ -68,9 +68,17 @@ EntityManager::component_removed(entity_id e_id, component_id c_id) {
   return {};
 }
 
+std::expected<boost::dynamic_bitset<>, EcsError>
+EntityManager::entity_bitset(entity_id e_id) {
+  if (alive_entities.size() <= e_id || !alive_entities.test(e_id))
+    return std::unexpected(NoEntity);
+  return entity_bitsets.at(e_id);
+}
+
 std::expected<bool, EcsError> EntityManager::has_component(entity_id e_id,
                                                            component_id c_id) {
   if (alive_entities.size() <= e_id || !alive_entities.test(e_id))
     return std::unexpected(NoEntity);
-  return entity_bitsets.at(e_id).size() > c_id && entity_bitsets.at(e_id).test(c_id);
+  return entity_bitsets.at(e_id).size() > c_id &&
+         entity_bitsets.at(e_id).test(c_id);
 }
