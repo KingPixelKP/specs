@@ -16,17 +16,32 @@ class IComponentArray {
 public:
   virtual ~IComponentArray() = default;
   /**
-  Other should be another component array with the same type as this otherwise
-  some bad stuff mat happen
+   * Transfers an entity's component from other into this
+   * @param other another component array with the same type as this
+   * @param e_id an entity to transfer
+   * @return An error if the entity is not tracked by the array
    */
   virtual std::expected<void, EcsError>
   transfer_entity(std::shared_ptr<IComponentArray> other, entity_id e_id) = 0;
-  virtual std::expected<void, EcsError> remove_entity(entity_id e_id) = 0;
+
   /**
-  Creates another ComponentArray with the same template that the caller has */
+   * Removes an entity from the component array
+   * @param e_id Entity id to remove
+   * @return An error if the entity is not tracked by the array
+   */
+  virtual std::expected<void, EcsError> remove_entity(entity_id e_id) = 0;
+
+  /**
+   * Creates another component array tied to the same template as this
+   * @return A shared pointer to the just created array
+   */
   virtual std::shared_ptr<IComponentArray> make_of_my_type() = 0;
 };
 
+/**
+ * Stores a mapping of entities to their components
+ * @tparam T Component type to be stored
+ */
 template <typename T> class ComponentArray : public IComponentArray {
 public:
   ComponentArray();
@@ -36,7 +51,20 @@ public:
                   entity_id e_id) override;
   std::expected<void, EcsError> remove_entity(entity_id e_id) override;
   std::shared_ptr<IComponentArray> make_of_my_type() override;
+
+  /**
+   * Adds a component to an entity
+   * @param e_id Entity to add component to
+   * @param component Component to add
+   * @return Error if the entity was already in the array
+   */
   std::expected<void, EcsError> add_component(entity_id e_id, T component);
+
+  /**
+   * Retrieves the component tied to the entity
+   * @param e_id Entity to get component from
+   * @return A reference wrapper to the component, or an error if the entity is not in the array
+   */
   std::expected<std::reference_wrapper<T>, EcsError>
   get_component_entity(entity_id e_id);
   T &get_component_index(size_t index);
@@ -110,19 +138,62 @@ template <typename T> T &ComponentArray<T>::get_component_index(size_t index) {
   return data.at(index);
 }
 
+/**
+ * Class used to store entities and its components that have a signature equal to it
+ */
 class Archetype {
 public:
+  /**
+   * Creates a new archetype with the same signature and component arrays as this
+   * @return An archetype
+   */
   Archetype make_of_my_type();
+
+  /**
+   * Registers a component to this archetyp
+   * @tparam T Component to register
+   * @param c_id Component id of the registered component
+   * @return An error if the component was already registered
+   */
   template <typename T>
   std::expected<void, EcsError> register_component(component_id c_id);
+
+  /**
+   * Ties a component to an entity
+   * @tparam T Component type
+   * @param e_id entity to add component to
+   * @param c_id component id tied to the type
+   * @param component component to add
+   * @return An error if the archetype does not manage that component, or if the entity is already in the archetype
+   */
   template <typename T>
   std::expected<void, EcsError> add_component(entity_id e_id, component_id c_id,
                                               T component);
-  /**Transfer an entity from other to this */
+
+  /**
+   * Transfers all the components tied to an entity in other into this
+   * @param other Archetype to transfer the entity from
+   * @param e_id entity to be transferred
+   * @return An error if the entity is not tracked by other
+   */
   std::expected<void, EcsError> transfer(Archetype &other, entity_id e_id);
+
+  /**
+   * Gets a component from an entity
+   * @tparam T Component type to get
+   * @param e_id entity to get component from
+   * @param c_id component id tied to that type
+   * @return Component tied to an entity, or an error if the archetype does not manage the component or does not have the entity
+   */
   template <typename T>
   std::expected<std::reference_wrapper<T>, EcsError>
   get_component(entity_id e_id, component_id c_id);
+
+  /**
+   * Removes an entity and all its components from the archetype
+   * @param e_id Entity to remove
+   * @return An error if the entity did not exist in the archetype
+   */
   std::expected<void, EcsError> remove_entity(entity_id e_id);
 
   bool has_entity(entity_id e_id);
@@ -158,9 +229,7 @@ Archetype::add_component(entity_id e_id, component_id c_id, T component) {
       std::static_pointer_cast<ComponentArray<T>>(
           component_id_to_array.at(c_id));
 
-  component_array->add_component(e_id, component);
-
-  return {};
+  return component_array->add_component(e_id, component);
 }
 
 template <typename T>
@@ -183,20 +252,50 @@ public:
   ArchetypeManager();
   ~ArchetypeManager();
 
+  /**
+   * Adds a component to an entity
+   * @tparam T Type of component to get
+   * @param e_id Entity to add component from
+   * @param c_id Component id tied to the component type
+   * @param component Component to add
+   * @param old_bitset Old bitset of the entity (before this component was added)
+   * @return An error if the entity already had that component
+   */
   template <typename T>
   std::expected<void, EcsError>
   add_component_entity(entity_id e_id, component_id c_id, T component,
                        boost::dynamic_bitset<> old_bitset);
+
+  /**
+   * Removes a component from an entity
+   * @param e_id Entity to remove component from
+   * @param c_id Component id of the component to remove
+   * @param old_bitset Old bitset of the entity (before this component was removed)
+   * @return An error if the entity does not exist or does not have that component
+   */
   std::expected<void, EcsError>
   remove_component_entity(entity_id e_id, component_id c_id,
                           boost::dynamic_bitset<> old_bitset);
 
+  /**
+   * Retrieves a component of an entity
+   * @tparam T Component type to get
+   * @param e_id Entity to get component from
+   * @param c_id Component id tied to the component type
+   * @param current_bitset Current bitset (signature) of the entity
+   * @return The component of that entity, or an error if the entity does not exist or if it does not have that component
+   */
   template <typename T>
   std::expected<std::reference_wrapper<T>, EcsError>
   get_component(entity_id e_id, component_id c_id,
                 boost::dynamic_bitset<> current_bitset);
 
 private:
+  /**
+   *
+   * @param e_id Entity to start tracking
+   * @return An error if the entity is already being tracked
+   */
   std::expected<void, EcsError> add_entity(entity_id e_id);
   std::expected<void, EcsError>
   remove_entity(entity_id e_id, boost::dynamic_bitset<> current_bitset);
