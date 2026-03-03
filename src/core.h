@@ -1,10 +1,14 @@
 #pragma once
 #include "archetype.h"
+#include "boost/dynamic_bitset/dynamic_bitset.hpp"
 #include "component.h"
 #include "entity.h"
+#include "query.h"
 #include "types.h"
 #include <expected>
 #include <functional>
+#include <iostream>
+#include <tuple>
 #ifndef CORE_H
 #define CORE_H
 
@@ -23,12 +27,18 @@ public:
   template <typename T>
   std::expected<void, EcsError> remove_component(entity_id e_id);
   template <typename T>
-  std::expected<std::reference_wrapper<T>, EcsError> get_component(entity_id e_id);
+  std::expected<std::reference_wrapper<T>, EcsError>
+  get_component(entity_id e_id);
 
   template <typename T>
   std::expected<bool, EcsError> has_component(entity_id e_id);
 
+  template <typename... T> std::expected<Query, EcsError> get_querry();
+
 private:
+  template <typename Head, typename... Tail>
+  boost::dynamic_bitset<> component_bitset(boost::dynamic_bitset<> bitset);
+
   EntityManager entity_manager;
   ComponentManager component_manager;
   ArchetypeManager archetype_manager;
@@ -67,7 +77,8 @@ std::expected<void, EcsError> Core::remove_component(entity_id e_id) {
 }
 
 template <typename T>
-std::expected<std::reference_wrapper<T>, EcsError> Core::get_component(entity_id e_id) {
+std::expected<std::reference_wrapper<T>, EcsError>
+Core::get_component(entity_id e_id) {
   component_id c_id = component_manager.get_component_id<T>();
   auto entity_fetch = entity_manager.entity_bitset(e_id);
   if (!entity_fetch)
@@ -79,6 +90,21 @@ template <typename T>
 std::expected<bool, EcsError> Core::has_component(entity_id e_id) {
   component_id c_id = component_manager.get_component_id<T>();
   return entity_manager.has_component(e_id, c_id);
+}
+template <typename... T> std::expected<Query, EcsError> Core::get_querry() {
+  boost::dynamic_bitset<> bitset;
+  return Query(component_bitset<T...>(bitset));
+}
+template <typename Head, typename... Tail>
+boost::dynamic_bitset<> Core::component_bitset(boost::dynamic_bitset<> bitset) {
+  if (bitset.size() <= get_component_id<Head>())
+    bitset.resize(get_component_id<Head>() + 1);
+  bitset.set(get_component_id<Head>());
+  if constexpr (sizeof...(Tail) > 0) {
+    return component_bitset<Tail...>(bitset);
+  } else {
+    return bitset;
+  }
 }
 
 #endif

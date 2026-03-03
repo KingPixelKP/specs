@@ -13,6 +13,10 @@ int main() {
     uint16_t number;
   } Singus;
 
+  typedef struct Lingus {
+    uint16_t number;
+  } Lingus;
+
   entity_id e1 = core.create_entity();
   entity_id e2 = core.create_entity();
 
@@ -27,4 +31,7 @@ int main() {
   result.value().get().number = 2;
   result = core.get_component<Dingus>(e1);
   assert(result.value().get().number == 2);
+
+  auto query_result = core.get_querry<Dingus, Singus, Lingus>();
+
 }
