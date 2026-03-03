@@ -5,11 +5,19 @@
 #ifndef COMPONENT_H
 #define COMPONENT_H
 
+/**
+ * Class used to translate types into component_ids
+ */
 class ComponentManager {
 public:
   ComponentManager();
   ~ComponentManager();
 
+  /**
+   * Maps a type to a unique component_id
+   * @tparam T A type
+   * @return A unique id associated with the type <T>
+   */
   template <typename T>
   component_id get_component_id();
 
