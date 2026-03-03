@@ -3,14 +3,13 @@
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
 #include "component.h"
 #include "entity.h"
-#include "query.h"
 #include "types.h"
 #include <expected>
 #include <functional>
-#include <iostream>
-#include <tuple>
 #ifndef CORE_H
 #define CORE_H
+
+class Query;
 
 class Core {
 public:
@@ -91,9 +90,12 @@ std::expected<bool, EcsError> Core::has_component(entity_id e_id) {
   component_id c_id = component_manager.get_component_id<T>();
   return entity_manager.has_component(e_id, c_id);
 }
+
+#include "query.h"
+
 template <typename... T> std::expected<Query, EcsError> Core::get_querry() {
   boost::dynamic_bitset<> bitset;
-  return Query(component_bitset<T...>(bitset));
+  return Query(this, component_bitset<T...>(bitset));
 }
 template <typename Head, typename... Tail>
 boost::dynamic_bitset<> Core::component_bitset(boost::dynamic_bitset<> bitset) {
