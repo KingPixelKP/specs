@@ -145,7 +145,7 @@ TEST(Core, QueryCreation) {
   std::ignore = core.add_component<Dingus>(e1, Dingus{1, "hi"});
   std::ignore = core.add_component<Singus>(e2, Singus{2});
 
-  auto query_result = core.get_querry<Dingus, Singus, Lingus>();
+  auto query_result = core.get_query<Dingus, Singus, Lingus>();
 
   EXPECT_TRUE(query_result);
 
@@ -155,4 +155,56 @@ TEST(Core, QueryCreation) {
   EXPECT_TRUE(query.has_component<Singus>());
   EXPECT_TRUE(query.has_component<Lingus>());
   EXPECT_FALSE(query.has_component<Ringus>());
+}
+
+TEST(Core, QueryIteration) {
+  Core core;
+
+  typedef struct Dingus {
+    uint16_t number;
+    std::string str;
+  } Dingus;
+
+  typedef struct Singus {
+    uint16_t number;
+  } Singus;
+
+  typedef struct Lingus {
+    uint16_t number;
+  } Lingus;
+  typedef struct Ringus {
+
+  } Ringus;
+
+  entity_id e1 = core.create_entity();
+  entity_id e2 = core.create_entity();
+
+  std::ignore = core.add_component<Dingus>(e1, Dingus{1, "hi"});
+  std::ignore = core.add_component<Singus>(e1, Singus{2});
+  std::ignore = core.add_component<Singus>(e2, Singus{2});
+
+  auto query_result = core.get_query<Dingus, Singus>();
+
+  EXPECT_TRUE(query_result);
+
+  auto query = query_result.value();
+
+  EXPECT_TRUE(query.has_component<Dingus>());
+  EXPECT_TRUE(query.has_component<Singus>());
+  EXPECT_FALSE(query.has_component<Lingus>());
+  EXPECT_FALSE(query.has_component<Ringus>());
+
+  auto query_it = query.iterator();
+
+  while (query_it.has_next()) {
+    auto &d_c = query_it.get<Dingus>();
+    auto s_c = query_it.get<Singus>();
+    d_c.number += s_c.number;
+    s_c.number = 4;
+    query_it.next();
+  }
+
+  EXPECT_EQ(core.get_component<Dingus>(e1).value().get().number, 3);
+  EXPECT_EQ(core.get_component<Singus>(e1).value().get().number, 2);
+  
 }

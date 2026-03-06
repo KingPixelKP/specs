@@ -6,6 +6,7 @@
 #include "types.h"
 #include <expected>
 #include <functional>
+#include <vector>
 #ifndef CORE_H
 #define CORE_H
 
@@ -32,7 +33,9 @@ public:
   template <typename T>
   std::expected<bool, EcsError> has_component(entity_id e_id);
 
-  template <typename... T> std::expected<Query, EcsError> get_querry();
+  template <typename... T> std::expected<Query, EcsError> get_query();
+
+  std::vector<Archetype*> get_archetypes(boost::dynamic_bitset<> query_bitset);
 
 private:
   template <typename Head, typename... Tail>
@@ -93,10 +96,11 @@ std::expected<bool, EcsError> Core::has_component(entity_id e_id) {
 
 #include "query.h"
 
-template <typename... T> std::expected<Query, EcsError> Core::get_querry() {
+template <typename... T> std::expected<Query, EcsError> Core::get_query() {
   boost::dynamic_bitset<> bitset;
   return Query(this, component_bitset<T...>(bitset));
 }
+
 template <typename Head, typename... Tail>
 boost::dynamic_bitset<> Core::component_bitset(boost::dynamic_bitset<> bitset) {
   if (bitset.size() <= get_component_id<Head>())

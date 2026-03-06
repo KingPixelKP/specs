@@ -9,6 +9,7 @@ typedef uint16_t component_id;
 enum EcsError {
     NoEntity,
     NoComponent,
+    NoArchetype,
     DupComponent,
     DupEntity,
     NotImplemented,
