@@ -206,5 +206,4 @@ TEST(Core, QueryIteration) {
 
   EXPECT_EQ(core.get_component<Dingus>(e1).value().get().number, 3);
   EXPECT_EQ(core.get_component<Singus>(e1).value().get().number, 2);
-  
 }

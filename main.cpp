@@ -1,8 +1,13 @@
 #include "core.h"
+#include "query.h"
+#include "types.h"
 #include <cassert>
-#include <string>
-int main() {
-  Core core;
+#include <chrono>
+#include <iostream>
+
+void core_speed_test() {
+
+  constexpr int etities = 1000000;
 
   typedef struct Dingus {
     uint16_t number;
@@ -16,36 +21,53 @@ int main() {
   typedef struct Lingus {
     uint16_t number;
   } Lingus;
-  typedef struct Ringus {
 
-  } Ringus;
+  Core core;
 
-  entity_id e1 = core.create_entity();
-  entity_id e2 = core.create_entity();
-
-  std::ignore = core.add_component<Dingus>(e1, Dingus{1, "hi"});
-  std::ignore = core.add_component<Singus>(e1, Singus{2});
-  std::ignore = core.add_component<Singus>(e2, Singus{2});
-
-  auto query_result = core.get_query<Dingus, Singus>();
-
-  (query_result);
-
-  auto query = query_result.value();
-
-  (query.has_component<Dingus>());
-  (query.has_component<Singus>());
-  (query.has_component<Lingus>());
-  (query.has_component<Ringus>());
-
-  auto query_it = query.iterator();
-
-  while (query_it.has_next()) {
-    auto &d_c = query_it.get<Dingus>();
-    auto s_c = query_it.get<Singus>();
-    d_c.number += s_c.number;
-    query_it.next();
+  for (int i = 0; i < etities; i++) {
+    entity_id e = core.create_entity();
+    std::ignore = core.add_component<Dingus>(e, Dingus{12, ""});
+    std::ignore = core.add_component<Singus>(e, Singus{12});
   }
 
-  (core.get_component<Dingus>(e1).value().get().number, 3);
+  Query query = core.get_query<Dingus, Singus>().value();
+
+  assert(query.size() == etities);
+
+  QueryIterator query_iterator = query.iterator();
+
+
+  using std::chrono::duration;
+  using std::chrono::duration_cast;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::milliseconds;
+
+  int iters = 0;
+
+  auto t1 = high_resolution_clock::now();
+  while (query_iterator.has_next()) {
+    auto &d_c = query_iterator.get<Dingus>();
+    auto s_c = query_iterator.get<Singus>();
+    iters++;
+    query_iterator.next();
+  }
+  auto t2 = high_resolution_clock::now();
+  auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+  std::cout << "Iterations: "<< iters << " " << ms_int.count() << "ms\n";
+}
+
+int main() {
+  using std::chrono::duration;
+  using std::chrono::duration_cast;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::milliseconds;
+
+  auto t1 = high_resolution_clock::now();
+  core_speed_test();
+  auto t2 = high_resolution_clock::now();
+
+  auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+  std::cout << ms_int.count() << "ms\n";
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "archetype.h"
 #include "boost/dynamic_bitset/dynamic_bitset.hpp"
+#include <cstddef>
 #include <vector>
 #ifndef QUERY_H
 #define QUERY_H
@@ -32,10 +33,12 @@ public:
   template <typename T> bool has_component();
 
   QueryIterator iterator();
+  size_t size();
 
 private:
   Core *core;
   boost::dynamic_bitset<> query_bitset;
+  std::vector<Archetype *> archetypes;
 };
 
 #include "core.h"

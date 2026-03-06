@@ -3,11 +3,8 @@
 #include "types.h"
 #include <cassert>
 #include <expected>
-#include <iostream>
 
 void EntityManager::expand_entities(int start, int finish) {
-  std::cout << "Expanded entities start: " << start << " finish: " << finish
-            << std::endl;
   alive_entities.resize(start + finish, false);
   for (int i = finish - 1; i >= start; --i)
     available_entities.push(i);

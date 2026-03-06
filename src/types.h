@@ -1,10 +1,10 @@
 #pragma once
-#include <cstdint>
+#include <cstddef>
 #ifndef TYPES_H
 #define TYPES_H
 
-typedef uint16_t entity_id;
-typedef uint16_t component_id;
+typedef size_t entity_id;
+typedef size_t component_id;
 
 enum EcsError {
     NoEntity,

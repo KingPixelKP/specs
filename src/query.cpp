@@ -14,7 +14,7 @@ bool QueryIterator::has_next() {
          current_entity_index < archetypes.at(current_archetype_index)->size();
 }
 
-void QueryIterator::next() {//TODO make better with modulus
+void QueryIterator::next() { // TODO make better with modulus
   if (current_entity_index >= archetypes.at(current_archetype_index)->size()) {
     current_archetype_index++;
     current_entity_index = 0;
@@ -24,8 +24,18 @@ void QueryIterator::next() {//TODO make better with modulus
 }
 
 Query::Query(Core *core, boost::dynamic_bitset<> bitset)
-    : core(core), query_bitset(bitset) {};
+    : core(core), query_bitset(bitset) {
+  archetypes = core->get_archetypes(query_bitset);
+};
 
 QueryIterator Query::iterator() {
-  return QueryIterator(core, query_bitset, core->get_archetypes(query_bitset));
+  return QueryIterator(core, query_bitset, archetypes);
+}
+
+size_t Query::size() {
+  size_t sum = 0;
+  for(auto arch : archetypes) {
+    sum += arch->size();
+  }
+  return sum;;
 }

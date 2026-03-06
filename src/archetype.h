@@ -383,6 +383,8 @@ ArchetypeManager::add_component_entity(entity_id e_id, component_id c_id,
       new_archetype = old_archetype->make_of_my_type();
       new_archetype->register_component<T>(c_id);
       bitset_to_archetype.insert({old_bitset, new_archetype});
+    } else {
+      new_archetype = new_result.value();
     }
 
     if (old_archetype->has_entity(e_id)) {
@@ -391,8 +393,11 @@ ArchetypeManager::add_component_entity(entity_id e_id, component_id c_id,
       }
     }
   } else {
-    new_archetype = Archetype::make_of_component<T>(c_id);
-    bitset_to_archetype.insert({old_bitset, new_archetype});
+    if (!new_result) {
+      new_archetype = Archetype::make_of_component<T>(c_id);
+      bitset_to_archetype.insert({old_bitset, new_archetype});
+    } else
+      new_archetype = new_result.value();
   }
   if (!new_archetype->add_component<T>(e_id, c_id, component))
     assert(false && "Something went wrong");
