@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.1.2)
-project(cECS)
+project(specs)
 
 include(CTest)
 enable_testing()
